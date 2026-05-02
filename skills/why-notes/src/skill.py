@@ -1,6 +1,7 @@
 """why-notes recorder: pipe a prose note in; one JSON file is written per note, anchored to a file + commit."""
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -8,6 +9,18 @@ import sys
 import uuid as uuidlib
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
+
+
+def _checksum(record):
+    """SHA-256 over the immutable fields, in a canonical sorted-key JSON encoding."""
+    fields = ("agent", "basename", "commit", "dir", "model", "note", "timestamp", "uuid")
+    payload = json.dumps(
+        {k: record[k] for k in fields},
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def _load_uuid(path):
@@ -182,6 +195,7 @@ def main():
         "related": args.related,
         "note": note,
     }
+    record["checksum"] = _checksum(record)
 
     filename = f"{file_rel.name}-{note_uuid}.json"
     out = notes_dir / filename
