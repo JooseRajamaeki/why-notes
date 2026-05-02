@@ -8,5 +8,6 @@
   "basename": "SKILL.md",
   "branch": "main",
   "commit": "1a72b71",
+  "related": [],
   "note": "We should also make it such that when a human note is recorded, we also record the name of the human as the model. The agent should ask for the human name to use in each session."
 }

@@ -58,7 +58,20 @@ def main():
         help="Path of the file the note is about, relative to --repo's root "
              "(e.g. 'src/auth/login.py'). Split into 'dir' + 'basename' in the JSON.",
     )
+    parser.add_argument(
+        "--related", nargs="*", default=[], metavar="UUID",
+        help="UUIDs of related why-notes (space-separated). Use to link "
+             "architectural principles that span multiple files; UUIDs of any "
+             "existing note (look them up via consult-why-notes).",
+    )
     args = parser.parse_args()
+
+    for u in args.related:
+        try:
+            uuidlib.UUID(u)
+        except ValueError:
+            print(f"why-notes: invalid uuid in --related: {u!r}", file=sys.stderr)
+            return 5
 
     if "/" in args.repo or ".." in args.repo or args.repo.startswith("."):
         print(f"why-notes: invalid --repo {args.repo!r}", file=sys.stderr)
@@ -106,6 +119,7 @@ def main():
         "basename": file_rel.name,
         "branch": branch,
         "commit": commit,
+        "related": args.related,
         "note": note,
     }
 

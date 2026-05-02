@@ -8,5 +8,6 @@
   "basename": "skill.py",
   "branch": "main",
   "commit": "66128bb",
+  "related": [],
   "note": "Let's change the structure a bit. The python script should guide the logging more. It should record, the source of the information, whether it was an agent or a human. For that it should have arguments like the agent (human, claude, openai, etc) and model (for example opus 4.7). These should be required keyword arguments."
 }

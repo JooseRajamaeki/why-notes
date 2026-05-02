@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-05-02T12:12:06.226008+00:00",
+  "uuid": "48520d68-5ad1-4f9c-be66-64440bb444d1",
+  "agent": "claude",
+  "model": "opus 4.7",
+  "repo": "why-notes",
+  "dir": "skills/why-notes/src",
+  "basename": "skill.py",
+  "branch": "main",
+  "commit": "7efdc97",
+  "related": [
+    "4350988f-1be8-4534-a6cf-b5c748661351"
+  ],
+  "note": "Implementation choices for --related.\n\n- Argument: --related accepts space-separated UUIDs (nargs='*'), validated by uuid.UUID(); invalid values fail fast with exit code 5. Considered comma-separated but space-separated reads more naturally on the CLI and matches argparse convention.\n- Schema position: 'related' lands between 'commit' and 'note' so the prose stays at the bottom of the JSON for human-readability. Migration script inserts it in this position for existing notes.\n- No bidirectional links: when note B says related=[A], note A is NOT auto-updated to back-reference B. Bidirectional linking would require rewriting existing JSON files at record time, which conflicts with the immutability of recorded notes (notes are append-only). Consumers that want a reverse index can build one by scanning the corpus.\n- No existence check: we don't verify that the referenced UUID exists in the local notes corpus, because cross-repo references are an explicit use case (the user mentioned \"across the codebase\") and a referenced note may live in a different WHY_NOTES_DIR."
+}

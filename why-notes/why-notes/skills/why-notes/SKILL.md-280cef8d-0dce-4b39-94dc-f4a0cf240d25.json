@@ -8,5 +8,6 @@
   "basename": "SKILL.md",
   "branch": "main",
   "commit": "85f2fa6",
+  "related": [],
   "note": "The skill md file is now way too verbose. The script should guide any agent to relevant practices and take care of the formatting."
 }

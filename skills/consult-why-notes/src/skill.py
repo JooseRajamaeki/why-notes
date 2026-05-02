@@ -87,12 +87,15 @@ def main():
     print(f"Found {len(matches)} note(s) for {args.repo}/{args.file_rel} (newest first; respect most recent if conflicting):", file=sys.stderr)
     print()
     for i, n in enumerate(matches, 1):
+        related = n.get("related", []) or []
         print(f"--- note {i}/{len(matches)} ---")
+        print(f"uuid:      {n.get('uuid', '?')}")
         print(f"timestamp: {n.get('timestamp', '?')}")
         print(f"agent:     {n.get('agent', '?')}")
         print(f"model:     {n.get('model', '?')}")
         print(f"commit:    {n.get('commit', '?')}")
         print(f"branch:    {n.get('branch', '?')}")
+        print(f"related:   {', '.join(related) if related else '(none)'}")
         print()
         print(n.get("note", ""))
         print()

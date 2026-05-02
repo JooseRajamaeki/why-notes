@@ -8,5 +8,6 @@
   "basename": "skill.py",
   "branch": "main",
   "commit": "66128bb",
+  "related": [],
   "note": "Let's make it so that the code fails if the commit information isn't there."
 }

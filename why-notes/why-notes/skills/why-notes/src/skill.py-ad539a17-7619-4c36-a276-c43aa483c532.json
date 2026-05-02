@@ -8,5 +8,6 @@
   "basename": "skill.py",
   "branch": "main",
   "commit": "66128bb",
+  "related": [],
   "note": "We should change the folder where the notes are written to be visible."
 }

@@ -8,5 +8,6 @@
   "basename": "skill.py",
   "branch": "main",
   "commit": "66128bb",
+  "related": [],
   "note": "Also each note should be written in a separate file and we should make them json format to be machine readable and storable in different data storage systems."
 }

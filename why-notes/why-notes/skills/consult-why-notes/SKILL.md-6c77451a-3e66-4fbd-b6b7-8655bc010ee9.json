@@ -8,5 +8,6 @@
   "basename": "SKILL.md",
   "branch": "main",
   "commit": "85f2fa6",
+  "related": [],
   "note": "We should create another skill in this repository. Now that we have the why-notes appearing and documenting the architecture we can leverage them. Whenever we start working on some file, we should check the relevant why-notes. The skill should guide the user to that. So we should have a minimal skill that tells where to look for information. Also as we are recording the time when everything was decided, we can explicitly inform the skill that more recent information should be respected if the information is conflicting."
 }

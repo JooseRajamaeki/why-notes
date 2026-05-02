@@ -8,5 +8,6 @@
   "basename": "skill.py",
   "branch": "main",
   "commit": "66128bb",
+  "related": [],
   "note": "Let's make it so that the directory where the why-notes are written is read from the environment variables. If it isn't set, let's default cwd repository root. If we are not in a git repo, let's default the cwd."
 }

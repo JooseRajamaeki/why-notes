@@ -8,5 +8,6 @@
   "basename": "skill.py",
   "branch": "main",
   "commit": "66128bb",
+  "related": [],
   "note": "Actually the commit in the file name is probably too much. It's already in the metadata so the final path name can be just <basename>-uuid.json."
 }

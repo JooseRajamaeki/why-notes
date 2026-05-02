@@ -8,5 +8,6 @@
   "basename": "skill.py",
   "branch": "main",
   "commit": "66128bb",
+  "related": [],
   "note": "Let's also make it so that the file structure within the why-notes is the whole path and commit. I.e. each not is stored in the path why-notes/repository/path-within-the-repository/<file-name-within-repository>-<commit-hash>-<uuid>.json Obsiously we should also create UUID for each note."
 }

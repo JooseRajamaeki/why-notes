@@ -8,5 +8,6 @@
   "basename": "skill.py",
   "branch": "main",
   "commit": "66128bb",
+  "related": [],
   "note": "Let's go with the recursive one. And to further the confusion, we might in the future be working with multiple repositories. The path would be why-notes/why-notes/why-notes/ the first is the name of this repo. The second is because any repo using this skill would store the notes in why-notes. And the third would be the repository being referred to. If this script was being used in the repository foo and it would refer to a code module in bar, the path would be foo/why-notes/bar/ Noticing here that the git repository that we are referring to should be added to the required arguments."
 }

@@ -6,10 +6,12 @@ description: Record the reasoning behind architectural decisions as they're made
 Pipe a prose note to `skills/why-notes/src/skill.py`. The script handles formatting, schema, metadata, and storage paths. Run it with `--help` for the full contract.
 
 ```bash
-python3 skills/why-notes/src/skill.py --agent <human|claude|...> --model <name-or-model-id> --repo <repo> --file <path-within-repo> <<'EOF'
+python3 skills/why-notes/src/skill.py --agent <human|claude|...> --model <name-or-model-id> --repo <repo> --file <path-within-repo> [--related <uuid>...] <<'EOF'
 <prose>
 EOF
 ```
+
+When this decision builds on or links to existing notes, pass their UUIDs via `--related` (look them up with `consult-why-notes`).
 
 Two rules the script can't enforce:
 
