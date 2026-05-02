@@ -16,9 +16,15 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
 
+SCHEMA_VERSION = "1"
+
 CHECKSUM_FIELDS = ("agent", "basename", "commit", "dir", "model", "note", "timestamp", "uuid")
+# Immutable fields added after the original schema. Included in the checksum
+# only when present on a given note, so legacy notes (written before the field
+# existed) still verify against their stored checksum.
+CHECKSUM_FIELDS_OPTIONAL = ("version",)
 SERIALIZED_FIELDS = (
-    "timestamp", "uuid", "agent", "model", "repo", "repo_url",
+    "timestamp", "uuid", "version", "agent", "model", "repo", "repo_url",
     "dir", "basename", "branch", "commit", "related", "note", "checksum",
 )
 
@@ -55,6 +61,7 @@ class Note:
     branch: str
     commit: str
     note: str
+    version: str = ""
     repo_url: str = ""
     related: list = field(default_factory=list)
     checksum: str = ""
@@ -67,6 +74,7 @@ class Note:
         n = cls(
             timestamp=datetime.now(timezone.utc).isoformat(),
             uuid=str(uuidlib.uuid4()),
+            version=SCHEMA_VERSION,
             agent=agent,
             model=model,
             repo=repo,
@@ -86,6 +94,7 @@ class Note:
         return cls(
             timestamp=data.get("timestamp", ""),
             uuid=data.get("uuid", ""),
+            version=data.get("version", "") or "",
             agent=data.get("agent", ""),
             model=data.get("model", ""),
             repo=data.get("repo", ""),
@@ -105,10 +114,12 @@ class Note:
         d = {
             "timestamp": self.timestamp,
             "uuid": self.uuid,
-            "agent": self.agent,
-            "model": self.model,
-            "repo": self.repo,
         }
+        if self.version:
+            d["version"] = self.version
+        d["agent"] = self.agent
+        d["model"] = self.model
+        d["repo"] = self.repo
         if self.repo_url:
             d["repo_url"] = self.repo_url
         d["dir"] = self.dir
@@ -122,8 +133,15 @@ class Note:
         return d
 
     def compute_checksum(self):
+        payload_dict = {k: getattr(self, k) for k in CHECKSUM_FIELDS}
+        # Optional fields contribute to the checksum only when present, so
+        # adding a new immutable field doesn't invalidate pre-existing notes.
+        for k in CHECKSUM_FIELDS_OPTIONAL:
+            v = getattr(self, k, "")
+            if v:
+                payload_dict[k] = v
         payload = json.dumps(
-            {k: getattr(self, k) for k in CHECKSUM_FIELDS},
+            payload_dict,
             sort_keys=True,
             separators=(",", ":"),
             ensure_ascii=False,

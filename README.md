@@ -63,6 +63,7 @@ One JSON per note (rather than an aggregate log) makes the corpus trivially inge
 |-------------|------------|------------------------------------------------------------------------------------------|
 | `timestamp` | string     | ISO 8601 UTC timestamp of when the note was recorded.                                    |
 | `uuid`      | string     | UUIDv4. Suffix of the filename; referenced by other notes' `related`.                    |
+| `version`   | string     | Schema version the note was written under (current: `"1"`). Omitted on pre-versioning notes. |
 | `agent`     | string     | Source: `human` for users, `claude` / `openai` / etc. for AI sources.                    |
 | `model`     | string     | AI model id (e.g. `opus 4.7`) for AI sources; the human's name for human sources.        |
 | `repo`      | string     | Git repository the note refers to (may differ from the cwd).                             |
@@ -73,7 +74,7 @@ One JSON per note (rather than an aggregate log) makes the corpus trivially inge
 | `repo_url` | string     | Git remote URL of the repo at recording time (omitted if unavailable).                   |
 | `related`   | `string[]` | UUIDs of related notes for cross-referencing principles that span files.                 |
 | `note`      | string     | Free-form prose: the rationale, constraint, or tradeoff being recorded.                  |
-| `checksum`  | string     | SHA-256 over the immutable fields (everything except `repo_url`, `related`, `branch`).    |
+| `checksum`  | string     | SHA-256 over the immutable fields (everything except `repo_url`, `related`, `branch`). New immutable fields (currently `version`) are folded into the checksum only when present, so legacy notes still verify. |
 
 `dir` is deliberately repo-relative — never relative to `$WHY_NOTES_DIR` or the cwd — so notes don't leak personal local-filesystem layout when shared.
 
