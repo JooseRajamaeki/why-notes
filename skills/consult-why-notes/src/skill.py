@@ -1,4 +1,4 @@
-"""consult-why-notes: print notes anchored to a specific file, newest first."""
+"""consult-why-notes: print notes anchored to a specific file plus those reachable via 'related' cross-references."""
 
 import argparse
 import json
@@ -16,6 +16,25 @@ def git(*args, cwd):
         return ""
 
 
+def print_note(n, label, show_location=False):
+    related = n.get("related") or []
+    print(f"--- {label} ---")
+    print(f"uuid:      {n.get('uuid', '?')}")
+    if show_location:
+        d = n.get("dir") or ""
+        loc = f"{n.get('repo', '?')}/" + (f"{d}/" if d else "") + n.get("basename", "?")
+        print(f"location:  {loc}")
+    print(f"timestamp: {n.get('timestamp', '?')}")
+    print(f"agent:     {n.get('agent', '?')}")
+    print(f"model:     {n.get('model', '?')}")
+    print(f"commit:    {n.get('commit', '?')}")
+    print(f"branch:    {n.get('branch', '?')}")
+    print(f"related:   {', '.join(related) if related else '(none)'}")
+    print()
+    print(n.get("note", ""))
+    print()
+
+
 def main():
     for stream in (sys.stdout, sys.stderr):
         try:
@@ -26,16 +45,21 @@ def main():
     parser = argparse.ArgumentParser(
         prog="consult-why-notes",
         description=(
-            "Print why-notes anchored to a specific file, newest first. Run "
-            "before reading or editing a file to see prior architectural "
-            "rationale. Later entries override earlier ones if they conflict — "
-            "the most recent timestamp wins."
+            "Print why-notes anchored to a specific file, plus any reachable "
+            "via 'related' cross-references, newest first. Run before reading "
+            "or editing a file to see prior architectural rationale. Later "
+            "entries override earlier ones if they conflict — the most recent "
+            "timestamp wins."
         ),
         epilog=(
             "Lookup root resolves in the same order as the recorder: "
             "$WHY_NOTES_DIR if set, otherwise <git-repo-root>/why-notes/, "
-            "otherwise <cwd>/why-notes/. Notes are matched by --repo and the "
-            "dir + basename derived from --file."
+            "otherwise <cwd>/why-notes/. Primary notes are matched by --repo "
+            "and the dir + basename derived from --file. Related notes are "
+            "found by transitively following each primary's 'related' UUID "
+            "list across the entire local notes corpus; cycles are detected "
+            "and unresolved UUIDs (e.g. references into another corpus) are "
+            "listed separately."
         ),
     )
     parser.add_argument(
@@ -75,36 +99,70 @@ def main():
         return 0
 
     expected_dir = "" if parent == "." else parent
-    matches = []
+    primaries = []
     for f in target_dir.glob(f"{fp.name}-*.json"):
         try:
             data = json.loads(f.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             continue
         if data.get("basename") == fp.name and data.get("dir", "") == expected_dir:
-            matches.append(data)
+            primaries.append(data)
 
-    if not matches:
+    if not primaries:
         print(f"consult-why-notes: no notes for {args.repo}/{args.file_rel}", file=sys.stderr)
         return 0
 
-    matches.sort(key=lambda d: d.get("timestamp", ""), reverse=True)
+    primaries.sort(key=lambda d: d.get("timestamp", ""), reverse=True)
 
-    print(f"Found {len(matches)} note(s) for {args.repo}/{args.file_rel} (newest first; respect most recent if conflicting):", file=sys.stderr)
+    index = {}
+    for f in notes_root.rglob("*.json"):
+        try:
+            d = json.loads(f.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        u = d.get("uuid")
+        if u:
+            index[u] = d
+
+    seen = {p["uuid"] for p in primaries if p.get("uuid")}
+    queue = []
+    for p in primaries:
+        queue.extend(p.get("related") or [])
+
+    related_notes = []
+    unresolved = []
+    while queue:
+        u = queue.pop(0)
+        if u in seen:
+            continue
+        seen.add(u)
+        n = index.get(u)
+        if n is None:
+            unresolved.append(u)
+            continue
+        related_notes.append(n)
+        queue.extend(n.get("related") or [])
+
+    related_notes.sort(key=lambda d: d.get("timestamp", ""), reverse=True)
+
+    print(
+        f"Found {len(primaries)} primary note(s) for {args.repo}/{args.file_rel} "
+        "(newest first; respect most recent if conflicting):"
+    )
     print()
-    for i, n in enumerate(matches, 1):
-        related = n.get("related", []) or []
-        print(f"--- note {i}/{len(matches)} ---")
-        print(f"uuid:      {n.get('uuid', '?')}")
-        print(f"timestamp: {n.get('timestamp', '?')}")
-        print(f"agent:     {n.get('agent', '?')}")
-        print(f"model:     {n.get('model', '?')}")
-        print(f"commit:    {n.get('commit', '?')}")
-        print(f"branch:    {n.get('branch', '?')}")
-        print(f"related:   {', '.join(related) if related else '(none)'}")
+    for i, n in enumerate(primaries, 1):
+        print_note(n, label=f"primary {i}/{len(primaries)}")
+
+    if related_notes:
+        print(f"Related notes reachable via cross-references ({len(related_notes)}, newest first):")
         print()
-        print(n.get("note", ""))
-        print()
+        for i, n in enumerate(related_notes, 1):
+            print_note(n, label=f"related {i}/{len(related_notes)}", show_location=True)
+
+    if unresolved:
+        uniq = sorted(set(unresolved))
+        print(f"Unresolved related UUIDs (not found in local corpus): {', '.join(uniq)}")
+
     return 0
 
 

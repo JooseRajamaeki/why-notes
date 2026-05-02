@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-05-02T12:35:29.776816+00:00",
+  "uuid": "aa876374-1a26-4eb5-b0c4-10de57f13c56",
+  "agent": "human",
+  "model": "Joose Rajamäki",
+  "repo": "why-notes",
+  "dir": "skills/consult-why-notes/src",
+  "basename": "skill.py",
+  "branch": "main",
+  "commit": "4e62983",
+  "related": [
+    "4350988f-1be8-4534-a6cf-b5c748661351",
+    "48520d68-5ad1-4f9c-be66-64440bb444d1"
+  ],
+  "note": "The script for consulting the why-notes should traverse and surface also the related notes."
+}
