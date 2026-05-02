@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-05-02T12:21:47.741414+00:00",
+  "uuid": "d24a3533-a82e-4fa7-a6c8-a4ac75805e7a",
+  "agent": "human",
+  "model": "Joose Rajam\u00e4ki",
+  "repo": "why-notes",
+  "dir": "",
+  "basename": "README.md",
+  "branch": "main",
+  "commit": "0728a53",
+  "related": [],
+  "note": "The README examples are not clearly noted as examples. Please make sure that they are more explicitly marked as examples."
+}

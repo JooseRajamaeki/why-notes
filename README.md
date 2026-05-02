@@ -14,6 +14,8 @@ Code review, commit messages, and inline comments capture *what* changed. They r
 
 Pipe a prose note to the recorder; the script wraps it with metadata and writes one JSON file per note.
 
+**Example invocation** (illustrative — `my-app`, `src/auth/login.py`, and the JWT rationale below are placeholders, not real values from this repo):
+
 ```bash
 python3 skills/why-notes/src/skill.py \
   --agent claude --model "opus 4.7" \
@@ -31,6 +33,8 @@ Run `--help` for the full contract. See `skills/why-notes/SKILL.md` for the agen
 ### `skills/consult-why-notes/` — the lookup
 
 Before reading or editing a file, surface the prior rationale anchored to it. Notes print newest-first; when entries conflict, the most recent timestamp wins.
+
+**Example invocation** (placeholder values — substitute the repo and file you're about to work on):
 
 ```bash
 python3 skills/consult-why-notes/src/skill.py --repo my-app --file src/auth/login.py
