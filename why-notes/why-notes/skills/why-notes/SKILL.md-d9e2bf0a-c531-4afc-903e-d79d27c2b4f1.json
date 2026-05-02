@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-05-02T17:46:15.341072+00:00",
+  "uuid": "d9e2bf0a-c531-4afc-903e-d79d27c2b4f1",
+  "agent": "human",
+  "model": "Joose Rajamäki",
+  "repo": "why-notes",
+  "repo_url": "git@github.com:JooseRajamaeki/why-notes.git",
+  "dir": "skills/why-notes",
+  "basename": "SKILL.md",
+  "branch": "main",
+  "commit": "7a3a98e",
+  "related": [
+    "280cef8d-0dce-4b39-94dc-f4a0cf240d25",
+    "cc2dd3d5-9e0e-471a-bbd2-a6160d4c7368"
+  ],
+  "note": "Hello, we should add add instructions that there should be an architectural decision per note. So each note should be kept minimal. It's ok and even a good idea to create multiple notes per discussion.",
+  "checksum": "e9a26f37df53864df7e2a7680a59d32c6f936c6250dccd84ab5405d95f5826b4"
+}
