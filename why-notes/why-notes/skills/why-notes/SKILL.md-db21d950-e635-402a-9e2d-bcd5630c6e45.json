@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-05-02T11:41:23.786587+00:00",
+  "uuid": "db21d950-e635-402a-9e2d-bcd5630c6e45",
+  "agent": "human",
+  "model": "Joose Rajam\u00e4ki",
+  "repo": "why-notes",
+  "dir": "skills/why-notes",
+  "basename": "SKILL.md",
+  "branch": "main",
+  "commit": "1a72b71",
+  "note": "We should also make it such that when a human note is recorded, we also record the name of the human as the model. The agent should ask for the human name to use in each session."
+}

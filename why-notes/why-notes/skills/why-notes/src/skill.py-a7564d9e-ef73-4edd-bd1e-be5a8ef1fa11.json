@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-05-02T06:41:42.443702+00:00",
+  "uuid": "a7564d9e-ef73-4edd-bd1e-be5a8ef1fa11",
+  "agent": "human",
+  "model": "n/a",
+  "repo": "why-notes",
+  "dir": "skills/why-notes/src",
+  "basename": "skill.py",
+  "branch": "main",
+  "commit": "66128bb",
+  "note": "Let's change the structure a bit. The python script should guide the logging more. It should record, the source of the information, whether it was an agent or a human. For that it should have arguments like the agent (human, claude, openai, etc) and model (for example opus 4.7). These should be required keyword arguments."
+}

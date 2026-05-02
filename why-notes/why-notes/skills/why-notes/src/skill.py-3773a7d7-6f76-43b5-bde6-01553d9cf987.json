@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-05-02T11:34:52.369963+00:00",
+  "uuid": "3773a7d7-6f76-43b5-bde6-01553d9cf987",
+  "agent": "human",
+  "model": "n/a",
+  "repo": "why-notes",
+  "dir": "skills/why-notes/src",
+  "basename": "skill.py",
+  "branch": "main",
+  "commit": "1a72b71",
+  "note": "We should have separate dir and basenames. But also the directory should be saved always from the repository root if applicable. If we take the relative path from the environment variable path or the current working directory, it might be a security issue exposing someone's local directory structure."
+}

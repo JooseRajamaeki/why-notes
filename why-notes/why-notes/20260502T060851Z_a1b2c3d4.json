@@ -1,9 +1,0 @@
-{
-  "timestamp": "2026-05-02T06:08:51.075295+00:00",
-  "agent": "claude",
-  "model": "opus 4.7",
-  "repo": "why-notes",
-  "branch": "",
-  "commit": "",
-  "note": "Design of the why-notes skill itself.\n\n- Model has full discretion over what to record; no Stop hook fires every turn. Considered (and rejected) two alternatives: (a) a Stop hook that silently flushes a pending buffer — risked pressuring the model to write something on every turn, and the every-turn machinery felt heavy; (b) a Stop hook that injects a \"did you record anything?\" reminder — would add a system-message turn to every conversation. Chose pure CLI invocation: the model decides when to call skill.py, and SKILL.md describes when to bother.\n\n- skill.py reads prose from stdin and handles all structuring (timestamp, agent, model, git branch, commit). SKILL.md stays short and free of schema templates — earlier draft prescribed a JSON shape for the model to emit, which the user rejected as too verbose.\n\n- Notes land in a visible top-level folder (why-notes/, no leading dot) so they're discoverable in plain file listings. Per-repo subfolders (why-notes/<repo>/log.md) so a single host repo can collect notes about multiple referenced repos — \"if foo uses this skill and the note is about bar, the path is foo/why-notes/bar/log.md\".\n\n- --agent, --model, --repo are all required. --agent + --model identify the source of the note (human vs which AI); --repo identifies the codebase the note is about, which may differ from the cwd."
-}

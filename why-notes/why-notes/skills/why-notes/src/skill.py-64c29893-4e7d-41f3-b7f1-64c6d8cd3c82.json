@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-05-02T06:42:06.117774+00:00",
+  "uuid": "64c29893-4e7d-41f3-b7f1-64c6d8cd3c82",
+  "agent": "human",
+  "model": "n/a",
+  "repo": "why-notes",
+  "dir": "skills/why-notes/src",
+  "basename": "skill.py",
+  "branch": "main",
+  "commit": "66128bb",
+  "note": "Actually the commit in the file name is probably too much. It's already in the metadata so the final path name can be just <basename>-uuid.json."
+}

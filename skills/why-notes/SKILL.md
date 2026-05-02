@@ -13,10 +13,10 @@ python3 skills/why-notes/src/skill.py --agent claude --model "opus 4.7" --repo m
 EOF
 ```
 
-JSON fields: `timestamp`, `uuid`, `agent`, `model`, `repo`, `file`, `branch`, `commit`, `note`.
+JSON fields: `timestamp`, `uuid`, `agent`, `model`, `repo`, `dir`, `basename`, `branch`, `commit`, `note`. `dir` is the parent directory of the noted file relative to the repo root (empty string if the file sits at the root); it's deliberately *not* relative to `$WHY_NOTES_DIR` or the cwd, so notes don't leak personal local-filesystem layout when ingested elsewhere.
 
 - `--agent` — source of the note: `human`, `claude`, `openai`, etc.
-- `--model` — model identifier (e.g. `"opus 4.7"`). Use `n/a` for human entries.
+- `--model` — model identifier (e.g. `"opus 4.7"`). For human entries, use the human's name (ask the user at the start of the session if you don't already know it).
 - `--repo` — name of the git repository the note refers to (the one being discussed, not necessarily the cwd).
 - `--file` — path of the file within `--repo` that this note is about (e.g. `src/auth/login.py`).
 
@@ -26,4 +26,4 @@ Skip routine fixes, renames, dependency bumps, and anything the code or commit m
 
 ## Recording human input
 
-When the user says something architectural worth preserving, record their words **verbatim** — copy the message into the heredoc unchanged. No paraphrasing, no summaries, no commentary, no reordering. Use `--agent human --model n/a`. If you also want to log your own analysis, do it as a separate entry with `--agent claude`.
+When the user says something architectural worth preserving, record their words **verbatim** — copy the message into the heredoc unchanged. No paraphrasing, no summaries, no commentary, no reordering. Use `--agent human --model <name>` where `<name>` is the human's name (ask once at session start; reuse for every human entry that session). If you also want to log your own analysis, do it as a separate entry with `--agent claude`.

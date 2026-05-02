@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-05-02T06:41:53.287898+00:00",
+  "uuid": "c0873e87-a0e7-4f49-ba20-cad6664b8ec8",
+  "agent": "human",
+  "model": "n/a",
+  "repo": "why-notes",
+  "dir": "skills/why-notes/src",
+  "basename": "skill.py",
+  "branch": "main",
+  "commit": "66128bb",
+  "note": "Also each note should be written in a separate file and we should make them json format to be machine readable and storable in different data storage systems."
+}

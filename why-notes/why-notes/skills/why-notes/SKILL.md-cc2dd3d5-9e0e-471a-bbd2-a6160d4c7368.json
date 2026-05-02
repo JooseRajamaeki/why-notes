@@ -1,9 +1,12 @@
 {
   "timestamp": "2026-05-02T06:14:43.456339+00:00",
+  "uuid": "cc2dd3d5-9e0e-471a-bbd2-a6160d4c7368",
   "agent": "human",
   "model": "n/a",
   "repo": "why-notes",
+  "dir": "skills/why-notes",
+  "basename": "SKILL.md",
   "branch": "",
-  "commit": "",
+  "commit": "66128bb",
   "note": "Let's also add that any human input related to architecture, such as this, should be recorded to the notes verbatim. No additions or modifications allowed when recording the human input."
 }

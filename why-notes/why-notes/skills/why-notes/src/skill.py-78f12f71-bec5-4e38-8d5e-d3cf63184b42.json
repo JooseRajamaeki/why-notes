@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-05-02T06:41:54.045882+00:00",
+  "uuid": "78f12f71-bec5-4e38-8d5e-d3cf63184b42",
+  "agent": "human",
+  "model": "n/a",
+  "repo": "why-notes",
+  "dir": "skills/why-notes/src",
+  "basename": "skill.py",
+  "branch": "main",
+  "commit": "66128bb",
+  "note": "Let's make it so that the code fails if the commit information isn't there."
+}

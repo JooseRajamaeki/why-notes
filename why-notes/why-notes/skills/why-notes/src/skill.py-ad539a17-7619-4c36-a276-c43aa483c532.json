@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-05-02T06:41:48.380964+00:00",
+  "uuid": "ad539a17-7619-4c36-a276-c43aa483c532",
+  "agent": "human",
+  "model": "n/a",
+  "repo": "why-notes",
+  "dir": "skills/why-notes/src",
+  "basename": "skill.py",
+  "branch": "main",
+  "commit": "66128bb",
+  "note": "We should change the folder where the notes are written to be visible."
+}

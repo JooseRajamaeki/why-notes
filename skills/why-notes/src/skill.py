@@ -19,12 +19,45 @@ def git(*args, cwd):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Record a why-note as a JSON file under why-notes/<repo>/<dirs>/.")
-    parser.add_argument("--agent", required=True, help="Source of the note: human, claude, openai, etc.")
-    parser.add_argument("--model", required=True, help="Model identifier, e.g. 'opus 4.7'. Use 'n/a' for humans.")
-    parser.add_argument("--repo", required=True, help="Name of the git repository the note refers to.")
-    parser.add_argument("--file", required=True, dest="file_rel",
-                        help="Path of the file within --repo that the note is about, e.g. src/auth/login.py.")
+    parser = argparse.ArgumentParser(
+        prog="why-notes",
+        description=(
+            "Record the reasoning behind an architectural decision. Pipe a "
+            "prose note to stdin; the script wraps it with metadata and writes "
+            "one JSON file per note, anchored to a specific file at a specific "
+            "commit so the rationale survives beyond the chat. Skip routine "
+            "fixes, renames, and anything the code or commit message already "
+            "explains."
+        ),
+        epilog=(
+            "Storage location resolves in order: $WHY_NOTES_DIR if set, "
+            "otherwise <git-repo-root>/why-notes/, otherwise <cwd>/why-notes/. "
+            "The note lands at <root>/<repo>/<dir>/<basename>-<uuid>.json. The "
+            "cwd must be a git repository with at least one commit (every note "
+            "needs a commit anchor). When --agent is 'human', record the "
+            "user's words verbatim — no paraphrasing or summarising."
+        ),
+    )
+    parser.add_argument(
+        "--agent", required=True,
+        help="Source of the note. Use 'human' for a user, or an AI identifier "
+             "('claude', 'openai', etc.) for AI-authored entries.",
+    )
+    parser.add_argument(
+        "--model", required=True,
+        help="For AI sources, the model identifier (e.g. 'opus 4.7', 'gpt-5'). "
+             "For human sources, the human's name (ask the user once per session).",
+    )
+    parser.add_argument(
+        "--repo", required=True,
+        help="Name of the git repository the note refers to. May differ from "
+             "the cwd's repo when one repo's notes describe code in another.",
+    )
+    parser.add_argument(
+        "--file", required=True, dest="file_rel", metavar="FILE",
+        help="Path of the file the note is about, relative to --repo's root "
+             "(e.g. 'src/auth/login.py'). Split into 'dir' + 'basename' in the JSON.",
+    )
     args = parser.parse_args()
 
     if "/" in args.repo or ".." in args.repo or args.repo.startswith("."):
@@ -62,13 +95,15 @@ def main():
     notes_dir.mkdir(parents=True, exist_ok=True)
 
     note_uuid = str(uuidlib.uuid4())
+    dir_in_repo = "" if parent == "." else parent
     record = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "uuid": note_uuid,
         "agent": args.agent,
         "model": args.model,
         "repo": args.repo,
-        "file": str(file_rel),
+        "dir": dir_in_repo,
+        "basename": file_rel.name,
         "branch": branch,
         "commit": commit,
         "note": note,
