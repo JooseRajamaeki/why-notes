@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-05-02T14:20:33.621068+00:00",
+  "uuid": "cfc2e616-0e41-46dc-90f3-3950bc8ddcd8",
+  "agent": "human",
+  "model": "Joose Rajamäki",
+  "repo": "why-notes",
+  "repo_url": "git@github.com:JooseRajamaeki/why-notes.git",
+  "dir": "skills/why-notes/src",
+  "basename": "skill.py",
+  "branch": "main",
+  "commit": "0498c18",
+  "related": [],
+  "note": "We should document for all scripts that we should avoid importing anything that's not in the standard library in order to avoid dependency management and for the whole system to be maximally portably on as bare-bones machine as possible."
+}

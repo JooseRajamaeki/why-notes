@@ -79,6 +79,7 @@ One JSON per note (rather than an aggregate log) makes the corpus trivially inge
 - **Commit anchor required.** The recorder fails if the cwd is not in a git repo with at least one commit. Every note ties to a codebase snapshot.
 - **Recency wins.** When notes conflict, the newer one supersedes. `consult-why-notes` surfaces newest-first to make this obvious.
 - **Skip the obvious.** Don't record what the code already shows or the commit message already explains. Notes are for the *why* that would otherwise be lost.
+- **Standard library only.** Scripts in this repo must not import anything outside the Python standard library. No `pip install`, no `requirements.txt`, no virtualenv — the tools must run on a bare-bones machine with only `python3` and `git` available. Reach for the stdlib (or shell out to `git`) before introducing any third-party dependency.
 
 ## Repository structure
 
