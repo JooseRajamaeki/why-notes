@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-05-02T17:38:50.874868+00:00",
+  "uuid": "de6d7296-461c-4212-b7fb-c322518c4d90",
+  "agent": "claude",
+  "model": "opus 4.7",
+  "repo": "why-notes",
+  "repo_url": "git@github.com:JooseRajamaeki/why-notes.git",
+  "dir": "skills/why-notes",
+  "basename": "SKILL.md",
+  "branch": "refactor/unified-skill-with-classes",
+  "commit": "6d454d6",
+  "related": [
+    "b7a9d15b-0363-4d04-ba33-d6816f4ee87c",
+    "15017160-f608-4682-baa9-0cd174501ee3",
+    "2d263e39-01ee-4e9b-8297-189b1c7ec865"
+  ],
+  "note": "The two original skills (`why-notes` recorder and `consult-why-notes` lookup) were collapsed into a single `why-notes` skill with two entry-point scripts (`record.py`, `consult.py`) sharing a `note.py` module. The trigger was the class-structure ask in #6: a shared Note/NotesStore cannot live cleanly across two sibling skill directories without breaking skill self-containment, and vendoring the module into each skill would drift. Considered alternatives: (1) sibling shared package imported via sys.path — fragile when skills are vendored individually; (2) keep two skills, copy the module — defeats the point. Single skill with multiple entry scripts gives trivial code sharing while SKILL.md still describes two distinct triggers (record on rationale, consult before edits). The `b7a9d15b` precedent (named helpers, not inline main) is what this generalizes — one step further to classes when duplication crosses module boundaries.",
+  "checksum": "0be856329ee47771a35c6c7f959b668a0042126749e28bd3e643f8402f28aacc"
+}
