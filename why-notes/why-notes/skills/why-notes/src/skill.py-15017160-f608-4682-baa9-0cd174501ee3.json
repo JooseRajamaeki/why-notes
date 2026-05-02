@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-05-02T16:38:35.859480+00:00",
+  "uuid": "15017160-f608-4682-baa9-0cd174501ee3",
+  "agent": "claude",
+  "model": "claude-sonnet-4-6",
+  "repo": "why-notes",
+  "repo_url": "git@github.com:JooseRajamaeki/why-notes.git",
+  "dir": "skills/why-notes/src",
+  "basename": "skill.py",
+  "branch": "main",
+  "commit": "909ba45",
+  "related": [
+    "b7a9d15b-0363-4d04-ba33-d6816f4ee87c"
+  ],
+  "note": "Backward cross-linking was added so that the dependency graph is bidirectionally traversable without needing a separate index. When a new note is created with --related UUIDs, the script immediately patches each referenced note's \"related\" list to include the new note's UUID. The alternative — querying forward links at read time — was rejected because it would require the consumer (consult-why-notes) to do a full scan on every traversal step rather than at write time once. Idempotency guard (skip if UUID already present) prevents duplicates on re-runs."
+}

@@ -10,6 +10,28 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
 
+def _load_uuid(path):
+    try:
+        return json.loads(path.read_text(encoding="utf-8")).get("uuid")
+    except Exception:
+        return None
+
+
+def _backlink(notes_root, rel_uuid, note_uuid):
+    found = next(
+        (p for p in notes_root.rglob("*.json") if _load_uuid(p) == rel_uuid),
+        None,
+    )
+    if found is None:
+        print(f"why-notes: warning: related uuid {rel_uuid!r} not found; skipping back-link", file=sys.stderr)
+        return
+    rel_record = json.loads(found.read_text(encoding="utf-8"))
+    if note_uuid not in rel_record.get("related", []):
+        rel_record.setdefault("related", []).append(note_uuid)
+        found.write_text(json.dumps(rel_record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(f"why-notes: back-linked {found}", file=sys.stderr)
+
+
 def git(*args, cwd):
     try:
         r = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, timeout=5)
@@ -165,6 +187,10 @@ def main():
     out = notes_dir / filename
     out.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"why-notes: wrote {out}", file=sys.stderr)
+
+    for rel_uuid in args.related:
+        _backlink(notes_root, rel_uuid, note_uuid)
+
     return 0
 
 
