@@ -71,6 +71,14 @@ def main():
              "existing note (look them up via consult-why-notes).",
     )
     parser.add_argument(
+        "--repo-url", default=None, dest="repo_url", metavar="URL",
+        help="URL of the git repository the note refers to (e.g. "
+             "'git@github.com:owner/repo.git' or "
+             "'https://github.com/owner/repo'). If omitted, falls back to "
+             "the cwd's 'origin' remote URL. Pass explicitly when --repo "
+             "differs from the cwd's repo.",
+    )
+    parser.add_argument(
         "--max-chars", type=int, default=1000, dest="max_chars", metavar="N",
         help="Maximum note length in characters for non-human entries "
              "(default: 1000). Human entries are never truncated or rejected. "
@@ -106,6 +114,7 @@ def main():
         print(f"why-notes: no git commit at {cwd} — notes require a commit anchor", file=sys.stderr)
         return 3
     branch = git("rev-parse", "--abbrev-ref", "HEAD", cwd=cwd)
+    repo_url = args.repo_url if args.repo_url is not None else git("remote", "get-url", "origin", cwd=cwd)
 
     note = sys.stdin.read().strip()
     if not note:
@@ -143,6 +152,7 @@ def main():
         "agent": args.agent,
         "model": args.model,
         "repo": args.repo,
+        "repo_url": repo_url,
         "dir": dir_in_repo,
         "basename": file_rel.name,
         "branch": branch,
