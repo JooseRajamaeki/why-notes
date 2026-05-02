@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-05-02T16:38:59.228180+00:00",
+  "uuid": "b7a9d15b-0363-4d04-ba33-d6816f4ee87c",
+  "agent": "claude",
+  "model": "claude-sonnet-4-6",
+  "repo": "why-notes",
+  "repo_url": "git@github.com:JooseRajamaeki/why-notes.git",
+  "dir": "skills/why-notes/src",
+  "basename": "skill.py",
+  "branch": "main",
+  "commit": "909ba45",
+  "related": [
+    "15017160-f608-4682-baa9-0cd174501ee3"
+  ],
+  "note": "The back-linking logic was extracted into _backlink() (and _load_uuid() as its helper) rather than inlined into main(). main() was already large and the user explicitly rejected an inline patch in favour of a dedicated function. This sets a precedent: new behaviour added to skill.py should live in named helpers rather than growing main() further."
+}
