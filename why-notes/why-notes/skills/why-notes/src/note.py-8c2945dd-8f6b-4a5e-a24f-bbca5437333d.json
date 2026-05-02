@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-05-02T17:27:20.691920+00:00",
+  "uuid": "8c2945dd-8f6b-4a5e-a24f-bbca5437333d",
+  "agent": "claude",
+  "model": "opus 4.7",
+  "repo": "why-notes",
+  "repo_url": "git@github.com:JooseRajamaeki/why-notes.git",
+  "dir": "skills/why-notes/src",
+  "basename": "note.py",
+  "branch": "refactor/unified-skill-with-classes",
+  "commit": "8fbc884",
+  "related": [
+    "02bda9ea-2b48-49ec-9718-93fba760e372"
+  ],
+  "note": "Smoke test: record + consult round-trip after class refactor.",
+  "checksum": "4780c8d67929efd1e69ef3c571b93869634896031051c3ee0604ec6b46e0390c"
+}
