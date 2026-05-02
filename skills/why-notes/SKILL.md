@@ -25,8 +25,9 @@ Pass `--related` UUIDs (look them up via `consult.py`) when this decision builds
 
 Run either script with `--help` for the full contract.
 
-Two rules the script can't enforce:
+Three rules the script can't enforce:
 
+- **One decision per note.** Keep each note minimal and focused on a single architectural decision. Splitting one discussion into several notes is encouraged.
 - **Verbatim human input.** When `--agent human`, copy the user's message into the heredoc unchanged — no paraphrasing or reordering.
 - **Human's name as --model.** Ask once at session start what name to use; reuse it for every human entry that session.
 
