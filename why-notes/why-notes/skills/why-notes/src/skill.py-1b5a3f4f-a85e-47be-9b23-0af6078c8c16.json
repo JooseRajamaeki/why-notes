@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-05-02T12:27:57.683226+00:00",
+  "uuid": "1b5a3f4f-a85e-47be-9b23-0af6078c8c16",
+  "agent": "human",
+  "model": "Joose Rajamäki",
+  "repo": "why-notes",
+  "dir": "skills/why-notes/src",
+  "basename": "skill.py",
+  "branch": "main",
+  "commit": "2caa45e",
+  "related": [],
+  "note": "We should make sure that the scripts handle UTF-8 encoding well. My name renders weirdly in the Github UI."
+}

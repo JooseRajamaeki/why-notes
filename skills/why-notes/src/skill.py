@@ -19,6 +19,12 @@ def git(*args, cwd):
 
 
 def main():
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
+
     parser = argparse.ArgumentParser(
         prog="why-notes",
         description=(
@@ -125,7 +131,7 @@ def main():
 
     filename = f"{file_rel.name}-{note_uuid}.json"
     out = notes_dir / filename
-    out.write_text(json.dumps(record, indent=2) + "\n")
+    out.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"why-notes: wrote {out}", file=sys.stderr)
     return 0
 

@@ -17,6 +17,12 @@ def git(*args, cwd):
 
 
 def main():
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
+
     parser = argparse.ArgumentParser(
         prog="consult-why-notes",
         description=(
@@ -72,7 +78,7 @@ def main():
     matches = []
     for f in target_dir.glob(f"{fp.name}-*.json"):
         try:
-            data = json.loads(f.read_text())
+            data = json.loads(f.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             continue
         if data.get("basename") == fp.name and data.get("dir", "") == expected_dir:
