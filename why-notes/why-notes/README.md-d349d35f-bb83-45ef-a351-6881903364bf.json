@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-05-02T18:21:31.259933+00:00",
+  "uuid": "d349d35f-bb83-45ef-a351-6881903364bf",
+  "version": "1",
+  "agent": "human",
+  "model": "Joose Rajamäki",
+  "repo": "why-notes",
+  "repo_url": "git@github.com:JooseRajamaeki/why-notes.git",
+  "dir": "",
+  "basename": "README.md",
+  "branch": "main",
+  "commit": "4e365b4",
+  "related": [],
+  "note": "I want to keep the project dependency free.",
+  "checksum": "2941bee61ff5b24b67b372f65c343f83e968fa8854c73284b9719fee49e69ae7"
+}
