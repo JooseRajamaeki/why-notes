@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-05-02T18:22:22.880442+00:00",
+  "uuid": "6c8fda1c-ff4c-496f-ad08-1964d4e81e54",
+  "version": "1",
+  "agent": "claude",
+  "model": "opus 4.7",
+  "repo": "why-notes",
+  "repo_url": "git@github.com:JooseRajamaeki/why-notes.git",
+  "dir": "skills/why-notes/tests",
+  "basename": "test_cli.py",
+  "branch": "main",
+  "commit": "4e365b4",
+  "related": [],
+  "note": "CLI tests run record.py and consult.py via subprocess in a throwaway git repo, with WHY_NOTES_DIR pointing at a tempdir under TemporaryDirectory(). This piggybacks on the corpus-resolution precedence already in NotesStore.resolve (env var beats git-root and cwd), so tests exercise the same code path that production runs while staying isolated from the real why-notes/ corpus. Without WHY_NOTES_DIR, the CLI would resolve to the repo's own why-notes/ directory and pollute the live corpus during test runs.",
+  "checksum": "05dd1b1c671b9fbf5b3d8fdd9b4579d3cb21dc326b88dbd131808e628b1002d1"
+}
