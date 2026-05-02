@@ -70,7 +70,19 @@ def main():
              "architectural principles that span multiple files; UUIDs of any "
              "existing note (look them up via consult-why-notes).",
     )
+    parser.add_argument(
+        "--max-chars", type=int, default=1000, dest="max_chars", metavar="N",
+        help="Maximum note length in characters for non-human entries "
+             "(default: 1000). Human entries are never truncated or rejected. "
+             "If you (the AI agent) believe a note legitimately needs to "
+             "exceed this limit, STOP and consult the human user before "
+             "raising it — do not silently bump the value.",
+    )
     args = parser.parse_args()
+
+    if args.max_chars < 1:
+        print(f"why-notes: --max-chars must be >= 1 (got {args.max_chars})", file=sys.stderr)
+        return 6
 
     for u in args.related:
         try:
@@ -99,6 +111,16 @@ def main():
     if not note:
         print("why-notes: empty input, nothing recorded", file=sys.stderr)
         return 1
+
+    if args.agent != "human" and len(note) > args.max_chars:
+        print(
+            f"why-notes: note is {len(note)} chars, exceeds --max-chars "
+            f"limit of {args.max_chars} for non-human agent {args.agent!r}. "
+            f"Tighten the note, or consult the human user before raising "
+            f"--max-chars.",
+            file=sys.stderr,
+        )
+        return 7
 
     env_dir = os.environ.get("WHY_NOTES_DIR")
     if env_dir:
