@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-05-02T18:03:38.572074+00:00",
+  "uuid": "dbfaee83-ed75-4d97-9228-fb295179526e",
+  "version": "1",
+  "agent": "human",
+  "model": "Joose Rajamäki",
+  "repo": "why-notes",
+  "repo_url": "git@github.com:JooseRajamaeki/why-notes.git",
+  "dir": "skills/why-notes/src",
+  "basename": "note.py",
+  "branch": "feature/note-versioning",
+  "commit": "1b1a801",
+  "related": [],
+  "note": "Let's include the version in the checksum fields. But we can make it so that it's included if it's present so it's backwards compatible. That's also a good general principle to keep the system extendable. The new (immutable) fields should be included in the checksum if they are present.",
+  "checksum": "ad9e81e76744ab864460bbeab7aa3f78d4af34de0a5237e48664aca4d634bb3f"
+}
