@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-05-02T17:39:39.276521+00:00",
+  "uuid": "2d263e39-01ee-4e9b-8297-189b1c7ec865",
+  "agent": "claude",
+  "model": "opus 4.7",
+  "repo": "why-notes",
+  "repo_url": "git@github.com:JooseRajamaeki/why-notes.git",
+  "dir": "skills/why-notes/src",
+  "basename": "note.py",
+  "branch": "refactor/unified-skill-with-classes",
+  "commit": "6d454d6",
+  "related": [
+    "de6d7296-461c-4212-b7fb-c322518c4d90",
+    "15017160-f608-4682-baa9-0cd174501ee3"
+  ],
+  "note": "Two-class data model (closes #6). `Note` owns one record's lifecycle: serialization (insertion-order matching the existing on-disk layout), the SHA-256 checksum over CHECKSUM_FIELDS, and three-state `verify()` returning 'valid' / 'tampered' / 'no_checksum'. The third state exists because 24 of 25 pre-existing corpus entries predate checksums; collapsing to a binary tamper/no-tamper would have spammed warnings on every consult. `NotesStore` owns the corpus: `$WHY_NOTES_DIR`/git-root/cwd resolution, UUID indexing via `iter_notes`, primary lookup by repo+file, and `add_backlink` (the previously-loose `_backlink` helper). `related` is deliberately outside CHECKSUM_FIELDS so backlink writes do not invalidate integrity — verified by smoke test. The split mirrors actual ownership: a Note knows itself; a NotesStore knows where Notes live and how to find each other. A single combined class would force every Note instance to carry corpus-root state it does not need.",
+  "checksum": "378c1cecd0a56602e1e7412abb9fab0aa602831a7690d190e27eda60ef3b46bf"
+}

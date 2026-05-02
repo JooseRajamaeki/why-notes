@@ -1,17 +1,29 @@
 ---
 name: why-notes
-description: Record the reasoning behind architectural decisions as they're made. Trigger when the user explains *why* a choice was made, alternatives are weighed, or a non-obvious workaround is introduced — so the rationale survives beyond the chat.
+description: Capture and surface architectural rationale. Trigger to RECORD when the user explains *why* a choice was made, alternatives are weighed, or a non-obvious workaround is introduced. Trigger to CONSULT before reading or editing a file in this project, so new decisions don't unknowingly contradict earlier reasoning.
 ---
 
-Pipe a prose note to `skills/why-notes/src/skill.py`. The script handles formatting, schema, metadata, and storage paths. Run it with `--help` for the full contract.
+Two scripts share one data model (`src/note.py`).
+
+**Consult** prior rationale before editing a file:
 
 ```bash
-python3 skills/why-notes/src/skill.py --agent <human|claude|...> --model <name-or-model-id> --repo <repo> --file <path-within-repo> [--related <uuid>...] <<'EOF'
+python3 skills/why-notes/src/consult.py --repo <repo> --file <path-within-repo>
+```
+
+Notes print newest-first; later entries override earlier ones. Tampered checksums are flagged on stderr.
+
+**Record** rationale at the moment it surfaces:
+
+```bash
+python3 skills/why-notes/src/record.py --agent <human|claude|...> --model <name-or-model-id> --repo <repo> --file <path-within-repo> [--related <uuid>...] <<'EOF'
 <prose>
 EOF
 ```
 
-When this decision builds on or links to existing notes, pass their UUIDs via `--related` (look them up with `consult-why-notes`).
+Pass `--related` UUIDs (look them up via `consult.py`) when this decision builds on existing notes.
+
+Run either script with `--help` for the full contract.
 
 Two rules the script can't enforce:
 

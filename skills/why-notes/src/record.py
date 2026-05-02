@@ -1,64 +1,23 @@
 """why-notes recorder: pipe a prose note in; one JSON file is written per note, anchored to a file + commit."""
 
 import argparse
-import hashlib
-import json
 import os
-import subprocess
 import sys
-import uuid as uuidlib
-from datetime import datetime, timezone
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
-
-def _checksum(record):
-    """SHA-256 over the immutable fields, in a canonical sorted-key JSON encoding."""
-    fields = ("agent", "basename", "commit", "dir", "model", "note", "timestamp", "uuid")
-    payload = json.dumps(
-        {k: record[k] for k in fields},
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-    )
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
-def _load_uuid(path):
-    try:
-        return json.loads(path.read_text(encoding="utf-8")).get("uuid")
-    except Exception:
-        return None
-
-
-def _backlink(notes_root, rel_uuid, note_uuid):
-    found = next(
-        (p for p in notes_root.rglob("*.json") if _load_uuid(p) == rel_uuid),
-        None,
-    )
-    if found is None:
-        print(f"why-notes: warning: related uuid {rel_uuid!r} not found; skipping back-link", file=sys.stderr)
-        return
-    rel_record = json.loads(found.read_text(encoding="utf-8"))
-    if note_uuid not in rel_record.get("related", []):
-        rel_record.setdefault("related", []).append(note_uuid)
-        found.write_text(json.dumps(rel_record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-        print(f"why-notes: back-linked {found}", file=sys.stderr)
-
-
-def git(*args, cwd):
-    try:
-        r = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, timeout=5)
-        return r.stdout.strip() if r.returncode == 0 else ""
-    except (subprocess.SubprocessError, FileNotFoundError):
-        return ""
+from note import (
+    Note,
+    NotesStore,
+    git,
+    reconfigure_streams_utf8,
+    validate_file_rel,
+    validate_repo,
+    validate_uuids,
+)
 
 
 def main():
-    for stream in (sys.stdin, sys.stdout, sys.stderr):
-        try:
-            stream.reconfigure(encoding="utf-8")
-        except (AttributeError, ValueError):
-            pass
+    reconfigure_streams_utf8((sys.stdin, sys.stdout, sys.stderr))
 
     parser = argparse.ArgumentParser(
         prog="why-notes",
@@ -103,7 +62,7 @@ def main():
         "--related", nargs="*", default=[], metavar="UUID",
         help="UUIDs of related why-notes (space-separated). Use to link "
              "architectural principles that span multiple files; UUIDs of any "
-             "existing note (look them up via consult-why-notes).",
+             "existing note (look them up via consult).",
     )
     parser.add_argument(
         "--repo-url", default=None, dest="repo_url", metavar="URL",
@@ -127,20 +86,22 @@ def main():
         print(f"why-notes: --max-chars must be >= 1 (got {args.max_chars})", file=sys.stderr)
         return 6
 
-    for u in args.related:
-        try:
-            uuidlib.UUID(u)
-        except ValueError:
-            print(f"why-notes: invalid uuid in --related: {u!r}", file=sys.stderr)
-            return 5
+    try:
+        validate_uuids(args.related)
+    except ValueError as e:
+        print(f"why-notes: {e}", file=sys.stderr)
+        return 5
 
-    if "/" in args.repo or ".." in args.repo or args.repo.startswith("."):
-        print(f"why-notes: invalid --repo {args.repo!r}", file=sys.stderr)
+    try:
+        validate_repo(args.repo)
+    except ValueError as e:
+        print(f"why-notes: {e}", file=sys.stderr)
         return 2
 
-    file_rel = PurePosixPath(args.file_rel)
-    if file_rel.is_absolute() or any(p == ".." for p in file_rel.parts) or not file_rel.name:
-        print(f"why-notes: invalid --file {args.file_rel!r}", file=sys.stderr)
+    try:
+        file_rel = validate_file_rel(args.file_rel)
+    except ValueError as e:
+        print(f"why-notes: {e}", file=sys.stderr)
         return 4
 
     cwd = Path(os.getcwd())
@@ -151,14 +112,14 @@ def main():
     branch = git("rev-parse", "--abbrev-ref", "HEAD", cwd=cwd)
     repo_url = args.repo_url if args.repo_url is not None else git("remote", "get-url", "origin", cwd=cwd)
 
-    note = sys.stdin.read().strip()
-    if not note:
+    note_text = sys.stdin.read().strip()
+    if not note_text:
         print("why-notes: empty input, nothing recorded", file=sys.stderr)
         return 1
 
-    if args.agent != "human" and len(note) > args.max_chars:
+    if args.agent != "human" and len(note_text) > args.max_chars:
         print(
-            f"why-notes: note is {len(note)} chars, exceeds --max-chars "
+            f"why-notes: note is {len(note_text)} chars, exceeds --max-chars "
             f"limit of {args.max_chars} for non-human agent {args.agent!r}. "
             f"Tighten the note, or consult the human user before raising "
             f"--max-chars.",
@@ -166,44 +127,31 @@ def main():
         )
         return 7
 
-    env_dir = os.environ.get("WHY_NOTES_DIR")
-    if env_dir:
-        notes_root = Path(env_dir)
-    else:
-        repo_root = git("rev-parse", "--show-toplevel", cwd=cwd)
-        notes_root = (Path(repo_root) if repo_root else cwd) / "why-notes"
+    note = Note.create(
+        agent=args.agent,
+        model=args.model,
+        repo=args.repo,
+        repo_url=repo_url,
+        file_rel=file_rel,
+        branch=branch,
+        commit=commit,
+        related=args.related,
+        note=note_text,
+    )
 
-    parent = str(file_rel.parent)
-    notes_dir = notes_root / args.repo
-    if parent != ".":
-        notes_dir = notes_dir / parent
-    notes_dir.mkdir(parents=True, exist_ok=True)
-
-    note_uuid = str(uuidlib.uuid4())
-    dir_in_repo = "" if parent == "." else parent
-    record = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "uuid": note_uuid,
-        "agent": args.agent,
-        "model": args.model,
-        "repo": args.repo,
-        "repo_url": repo_url,
-        "dir": dir_in_repo,
-        "basename": file_rel.name,
-        "branch": branch,
-        "commit": commit,
-        "related": args.related,
-        "note": note,
-    }
-    record["checksum"] = _checksum(record)
-
-    filename = f"{file_rel.name}-{note_uuid}.json"
-    out = notes_dir / filename
-    out.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"why-notes: wrote {out}", file=sys.stderr)
+    store = NotesStore.resolve(cwd)
+    out_path = store.write(note)
+    print(f"why-notes: wrote {out_path}", file=sys.stderr)
 
     for rel_uuid in args.related:
-        _backlink(notes_root, rel_uuid, note_uuid)
+        patched = store.add_backlink(rel_uuid, note.uuid)
+        if patched is None:
+            print(
+                f"why-notes: warning: related uuid {rel_uuid!r} not found; skipping back-link",
+                file=sys.stderr,
+            )
+        else:
+            print(f"why-notes: back-linked {patched}", file=sys.stderr)
 
     return 0
 
