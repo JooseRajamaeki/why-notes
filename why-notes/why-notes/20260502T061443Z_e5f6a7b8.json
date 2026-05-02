@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-05-02T06:14:43.456339+00:00",
+  "agent": "human",
+  "model": "n/a",
+  "repo": "why-notes",
+  "branch": "",
+  "commit": "",
+  "note": "Let's also add that any human input related to architecture, such as this, should be recorded to the notes verbatim. No additions or modifications allowed when recording the human input."
+}
