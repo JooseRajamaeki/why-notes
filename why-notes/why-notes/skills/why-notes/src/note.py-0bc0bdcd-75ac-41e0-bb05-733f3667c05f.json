@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-05-13T15:55:10.980413+00:00",
+  "uuid": "0bc0bdcd-75ac-41e0-bb05-733f3667c05f",
+  "version": "1",
+  "agent": "human",
+  "model": "Joose Rajamäki",
+  "repo": "why-notes",
+  "repo_url": "git@github.com:JooseRajamaeki/why-notes.git",
+  "dir": "skills/why-notes/src",
+  "basename": "note.py",
+  "branch": "tests/add-unittest-suite",
+  "commit": "8fedcc2",
+  "related": [
+    "dbfaee83-ed75-4d97-9228-fb295179526e"
+  ],
+  "note": "Hello, we should make it such that the fields for computing the why-note hash are included in a field in the why-note. This way also the notes before versioning are valid because you can include what was used to compute the checksum hash. When the checksum data struct has been added after this modification, it can be self referential, i.e. the list of fields to use for the checksum can itself affect the checksum.\n\nWe don't need to retain the old legacy behavior. For the existing notes we can use empty list. The empty list communicates that no checksum should be applicable. Also the loader can skip checking the checksum for empty lists. The CHECKSUM_FIELDS and the optional fields should be merged to a single list in each note's checksum_fields. The optional ones were always a backwards compatibility solution so they can be equal fields in the CHECKSUM_FIELDS now that the notes will themselves keep track of what affects the checksum.",
+  "checksum": "1275c810caa7cc997e9f48388f0a28f21aaa5dbefb9d66df40cae9b2f4e6207a"
+}

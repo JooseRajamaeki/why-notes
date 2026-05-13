@@ -13,7 +13,6 @@ sys.path.insert(0, str(SRC))
 
 from note import (  # noqa: E402
     CHECKSUM_FIELDS,
-    CHECKSUM_FIELDS_OPTIONAL,
     SCHEMA_VERSION,
     Note,
     NotesStore,
@@ -73,35 +72,52 @@ class NoteChecksumTests(unittest.TestCase):
         self.assertTrue(n.checksum)
         self.assertEqual(n.verify(), "valid")
 
-    def test_checksum_includes_version_when_present(self):
-        # Hand-build a legacy note with no version, checksum'd over base fields.
-        legacy = make_note()
-        legacy.version = ""
-        legacy.checksum = legacy.compute_checksum()
-        self.assertEqual(legacy.verify(), "valid")
-        # Same fields but with version set should produce a *different* checksum.
-        modern = make_note()
-        modern.version = SCHEMA_VERSION
-        modern.checksum = modern.compute_checksum()
-        self.assertNotEqual(legacy.checksum, modern.checksum)
-
-    def test_legacy_note_without_version_still_verifies(self):
-        # Simulate a note saved before the version field existed.
+    def test_create_stores_canonical_checksum_fields(self):
         n = make_note()
-        n.version = ""
-        n.checksum = n.compute_checksum()
-        # Round-trip through dict to mimic on-disk read.
-        round_tripped = Note.from_dict(n.to_dict())
-        self.assertEqual(round_tripped.verify(), "valid")
+        self.assertEqual(list(n.checksum_fields), list(CHECKSUM_FIELDS))
 
-    def test_tampered_note_flagged(self):
+    def test_checksum_is_self_referential(self):
+        # Altering checksum_fields invalidates the hash, because
+        # "checksum_fields" is itself one of the hashed fields.
+        n = make_note()
+        n.checksum_fields = [f for f in n.checksum_fields if f != "version"]
+        self.assertEqual(n.verify(), "corrupted")
+
+    def test_legacy_note_without_checksum_fields_is_no_checksum(self):
+        # Notes written before the self-describing scheme have no
+        # checksum_fields on disk; from_dict defaults to an empty list and
+        # verify reports 'no_checksum' regardless of the stored hash.
+        legacy_data = {
+            "timestamp": "2026-01-01T00:00:00+00:00",
+            "uuid": "11111111-1111-1111-1111-111111111111",
+            "agent": "claude",
+            "model": "opus 4.6",
+            "repo": "why-notes",
+            "dir": "src",
+            "basename": "note.py",
+            "branch": "main",
+            "commit": "deadbee",
+            "related": [],
+            "note": "legacy rationale",
+            "checksum": "0" * 64,
+        }
+        n = Note.from_dict(legacy_data)
+        self.assertEqual(n.checksum_fields, [])
+        self.assertEqual(n.verify(), "no_checksum")
+
+    def test_corrupted_note_flagged(self):
         n = make_note()
         n.note = "edited after recording"
-        self.assertEqual(n.verify(), "tampered")
+        self.assertEqual(n.verify(), "corrupted")
 
     def test_no_checksum_returns_no_checksum(self):
         n = make_note()
         n.checksum = ""
+        self.assertEqual(n.verify(), "no_checksum")
+
+    def test_empty_checksum_fields_returns_no_checksum(self):
+        n = make_note()
+        n.checksum_fields = []
         self.assertEqual(n.verify(), "no_checksum")
 
     def test_related_field_excluded_from_checksum(self):
@@ -112,8 +128,11 @@ class NoteChecksumTests(unittest.TestCase):
         self.assertEqual(n.verify(), "valid")
         self.assertEqual(n.compute_checksum(), original)
 
-    def test_checksum_field_lists_have_no_overlap(self):
-        self.assertEqual(set(CHECKSUM_FIELDS) & set(CHECKSUM_FIELDS_OPTIONAL), set())
+    def test_canonical_checksum_fields_contains_version_and_self(self):
+        self.assertIn("version", CHECKSUM_FIELDS)
+        self.assertIn("checksum_fields", CHECKSUM_FIELDS)
+        # Used by new notes, so SCHEMA_VERSION must be a non-empty string.
+        self.assertTrue(SCHEMA_VERSION)
 
 
 class NoteSerializationTests(unittest.TestCase):
@@ -128,10 +147,12 @@ class NoteSerializationTests(unittest.TestCase):
         n = make_note()
         n.repo_url = ""
         n.version = ""
+        n.checksum_fields = []
         n.checksum = ""
         d = n.to_dict()
         self.assertNotIn("repo_url", d)
         self.assertNotIn("version", d)
+        self.assertNotIn("checksum_fields", d)
         self.assertNotIn("checksum", d)
 
     def test_dir_empty_when_file_at_repo_root(self):

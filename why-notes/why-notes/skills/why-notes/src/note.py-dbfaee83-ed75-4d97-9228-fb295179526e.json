@@ -10,7 +10,9 @@
   "basename": "note.py",
   "branch": "feature/note-versioning",
   "commit": "1b1a801",
-  "related": [],
+  "related": [
+    "0bc0bdcd-75ac-41e0-bb05-733f3667c05f"
+  ],
   "note": "Let's include the version in the checksum fields. But we can make it so that it's included if it's present so it's backwards compatible. That's also a good general principle to keep the system extendable. The new (immutable) fields should be included in the checksum if they are present.",
   "checksum": "ad9e81e76744ab864460bbeab7aa3f78d4af34de0a5237e48664aca4d634bb3f"
 }
