@@ -25,6 +25,14 @@ Pass `--related` UUIDs (look them up via `consult.py`) when this decision builds
 
 Run either script with `--help` for the full contract.
 
+**Rebase / amend** appends the new short SHA to each affected note's `commit` chain (newest last) and recomputes the checksum, so notes keep pointing at live history. Enable once per repo:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+The bundled `.githooks/post-rewrite` invokes `src/rewrite.py --stdin`. For one-off fixes, run it directly with `--map OLD=NEW`.
+
 Three rules the script can't enforce:
 
 - **One decision per note.** Keep each note minimal and focused on a single architectural decision. Splitting one discussion into several notes is encouraged.

@@ -16,6 +16,8 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "skills" / "why-notes" / "src"
 RECORD = SRC / "record.py"
 CONSULT = SRC / "consult.py"
+REWRITE = SRC / "rewrite.py"
+HOOK = ROOT / ".githooks" / "post-rewrite"
 
 
 def init_git_repo(path):
@@ -53,6 +55,18 @@ def run_consult(cwd, notes_dir, *args):
     return subprocess.run(
         [sys.executable, str(CONSULT), *args],
         cwd=cwd,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+
+def run_rewrite(cwd, notes_dir, *args, stdin=""):
+    env = {**os.environ, "WHY_NOTES_DIR": str(notes_dir)}
+    return subprocess.run(
+        [sys.executable, str(REWRITE), *args],
+        cwd=cwd,
+        input=stdin,
         capture_output=True,
         text=True,
         env=env,
@@ -285,6 +299,191 @@ class ConsultCliTests(unittest.TestCase):
             self.repo, self.notes, "--repo", "../escape", "--file", "src/foo.py"
         )
         self.assertEqual(c.returncode, 2)
+
+
+class RewriteCliTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.repo = Path(self.tmp.name) / "repo"
+        self.repo.mkdir()
+        self.notes = Path(self.tmp.name) / "notes"
+        init_git_repo(self.repo)
+
+    def _record_one(self):
+        r = run_record(
+            self.repo, self.notes,
+            "--agent", "claude", "--model", "opus 4.7",
+            "--repo", "demo", "--file", "src/foo.py",
+            stdin="original rationale",
+        )
+        self.assertEqual(r.returncode, 0, r.stderr)
+        path = next((self.notes / "demo" / "src").glob("foo.py-*.json"))
+        return path, json.loads(path.read_text(encoding="utf-8"))
+
+    def test_map_appends_new_sha_and_recomputes_checksum(self):
+        path, before = self._record_one()
+        old_short = before["commit"][0] if isinstance(before["commit"], list) else before["commit"]
+        # Make a second commit so we have a distinct SHA to rewrite TO; without
+        # it `new_full` would still resolve to the note's anchor and
+        # append_commit (idempotent) would correctly no-op.
+        (self.repo / "second.txt").write_text("x\n", encoding="utf-8")
+        env = {
+            **os.environ,
+            "GIT_AUTHOR_NAME": "test", "GIT_AUTHOR_EMAIL": "test@example.com",
+            "GIT_COMMITTER_NAME": "test", "GIT_COMMITTER_EMAIL": "test@example.com",
+        }
+        subprocess.run(["git", "add", "second.txt"], cwd=self.repo, check=True, env=env)
+        subprocess.run(["git", "commit", "-q", "-m", "second"], cwd=self.repo, check=True, env=env)
+        new_full = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=self.repo,
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+
+        r = run_rewrite(
+            self.repo, self.notes,
+            "--map", f"{old_short}={new_full}",
+        )
+        self.assertEqual(r.returncode, 0, r.stderr)
+        after = json.loads(path.read_text(encoding="utf-8"))
+        self.assertIsInstance(after["commit"], list)
+        self.assertEqual(after["commit"][0], old_short)
+        self.assertEqual(len(after["commit"]), 2)
+        self.assertNotEqual(after["checksum"], before["checksum"])
+
+        # Re-verifies via consult.
+        c = run_consult(self.repo, self.notes, "--repo", "demo", "--file", "src/foo.py")
+        self.assertEqual(c.returncode, 0, c.stderr)
+        self.assertNotIn("failed checksum", c.stderr)
+
+    def test_stdin_skips_pairs_with_no_matching_note(self):
+        path, before = self._record_one()
+        r = run_rewrite(
+            self.repo, self.notes,
+            "--stdin",
+            stdin="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa "
+                  "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n",
+        )
+        self.assertEqual(r.returncode, 0, r.stderr)
+        after = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(after["commit"], before["commit"])
+        self.assertEqual(after["checksum"], before["checksum"])
+
+    def test_stdin_handles_empty_input(self):
+        r = run_rewrite(self.repo, self.notes, "--stdin", stdin="")
+        self.assertEqual(r.returncode, 0, r.stderr)
+
+    def test_idempotent_against_repeat_invocations(self):
+        path, _ = self._record_one()
+        (self.repo / "second.txt").write_text("x\n", encoding="utf-8")
+        env = {
+            **os.environ,
+            "GIT_AUTHOR_NAME": "test", "GIT_AUTHOR_EMAIL": "test@example.com",
+            "GIT_COMMITTER_NAME": "test", "GIT_COMMITTER_EMAIL": "test@example.com",
+        }
+        subprocess.run(["git", "add", "second.txt"], cwd=self.repo, check=True, env=env)
+        subprocess.run(["git", "commit", "-q", "-m", "second"], cwd=self.repo, check=True, env=env)
+        new_full = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=self.repo,
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        old_short = json.loads(path.read_text(encoding="utf-8"))["commit"]
+        if isinstance(old_short, list):
+            old_short = old_short[0]
+        run_rewrite(self.repo, self.notes, "--map", f"{old_short}={new_full}")
+        after_first = json.loads(path.read_text(encoding="utf-8"))
+
+        # Second invocation with the same pair: current SHA already equals
+        # the abbreviated new SHA, so append_commit no-ops.
+        new_short = after_first["commit"][-1]
+        run_rewrite(self.repo, self.notes, "--map", f"{new_short}={new_full}")
+        after_second = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(after_first, after_second)
+
+
+class BundledHookTests(unittest.TestCase):
+    def test_bundled_hook_is_executable_and_invokes_rewrite(self):
+        self.assertTrue(HOOK.is_file(), f"bundled hook missing: {HOOK}")
+        self.assertTrue(os.access(HOOK, os.X_OK), f"bundled hook not executable: {HOOK}")
+        body = HOOK.read_text(encoding="utf-8")
+        # Must end with executing rewrite.py from the repo's installed skill.
+        self.assertIn("skills/why-notes/src/rewrite.py", body)
+        self.assertIn("--stdin", body)
+
+
+class PostRewriteHookTests(unittest.TestCase):
+    """End-to-end: a real rebase fires .githooks/post-rewrite, which
+    pipes git's mapping into rewrite.py and patches matching notes."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.repo = Path(self.tmp.name) / "repo"
+        self.repo.mkdir()
+        self.notes = Path(self.tmp.name) / "notes"
+
+        # A repo with 3 commits we can rebase. Hook is wired via
+        # core.hooksPath to the bundled .githooks dir from this checkout.
+        self.git_env = {
+            **os.environ,
+            "GIT_AUTHOR_NAME": "test", "GIT_AUTHOR_EMAIL": "test@example.com",
+            "GIT_COMMITTER_NAME": "test", "GIT_COMMITTER_EMAIL": "test@example.com",
+            "WHY_NOTES_DIR": str(self.notes),
+            "GIT_SEQUENCE_EDITOR": "true",  # accept the rebase todo as-is
+        }
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.repo, check=True, env=self.git_env)
+        # Bundled hook resolves `$REPO_ROOT/skills/why-notes/src/rewrite.py`,
+        # which only exists when the user's repo has the skill installed
+        # alongside the notes (the why-notes repo's own setup). The temp repo
+        # doesn't, so write a test-only hook that invokes rewrite.py from this
+        # checkout's source tree directly.
+        hooks_dir = Path(self.tmp.name) / "hooks"
+        hooks_dir.mkdir()
+        hook = hooks_dir / "post-rewrite"
+        hook.write_text(
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            f"exec {sys.executable} {REWRITE} --stdin\n",
+            encoding="utf-8",
+        )
+        hook.chmod(0o755)
+        subprocess.run(["git", "config", "core.hooksPath", str(hooks_dir)],
+                       cwd=self.repo, check=True, env=self.git_env)
+        for i in range(3):
+            f = self.repo / f"f{i}.txt"
+            f.write_text(f"{i}\n", encoding="utf-8")
+            subprocess.run(["git", "add", f.name], cwd=self.repo, check=True, env=self.git_env)
+            subprocess.run(["git", "commit", "-q", "-m", f"c{i}"], cwd=self.repo,
+                           check=True, env=self.git_env)
+
+    def test_amend_propagates_to_note(self):
+        r = run_record(
+            self.repo, self.notes,
+            "--agent", "claude", "--model", "opus 4.7",
+            "--repo", "demo", "--file", "src/foo.py",
+            stdin="anchor",
+        )
+        self.assertEqual(r.returncode, 0, r.stderr)
+        path = next((self.notes / "demo" / "src").glob("foo.py-*.json"))
+        before = json.loads(path.read_text(encoding="utf-8"))
+        old_short = before["commit"][0] if isinstance(before["commit"], list) else before["commit"]
+
+        # Amend HEAD with a new message to guarantee a different SHA
+        # (--no-edit + same-second timestamp can otherwise reproduce the
+        # original SHA and the post-rewrite pair becomes an identity).
+        subprocess.run(
+            ["git", "commit", "--amend", "-q", "-m", "c2-reworded"],
+            cwd=self.repo, check=True, env=self.git_env,
+        )
+        after = json.loads(path.read_text(encoding="utf-8"))
+        self.assertIsInstance(after["commit"], list)
+        self.assertEqual(after["commit"][0], old_short)
+        self.assertEqual(len(after["commit"]), 2)
+
+        # And the note still verifies via consult.
+        c = run_consult(self.repo, self.notes, "--repo", "demo", "--file", "src/foo.py")
+        self.assertEqual(c.returncode, 0, c.stderr)
+        self.assertNotIn("failed checksum", c.stderr)
 
 
 if __name__ == "__main__":

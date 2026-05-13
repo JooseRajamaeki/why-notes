@@ -22,7 +22,11 @@ def print_note(n, label, show_location=False):
     print(f"timestamp: {n.timestamp or '?'}")
     print(f"agent:     {n.agent or '?'}")
     print(f"model:     {n.model or '?'}")
-    print(f"commit:    {n.commit or '?'}")
+    chain = n.commit if isinstance(n.commit, list) else ([n.commit] if n.commit else [])
+    if len(chain) > 1:
+        print(f"commit:    {chain[-1]}  (rewritten {len(chain) - 1}x; original {chain[0]})")
+    else:
+        print(f"commit:    {n.current_commit() or '?'}")
     print(f"branch:    {n.branch or '?'}")
     print(f"related:   {', '.join(related) if related else '(none)'}")
     print()
