@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-05-13T16:00:55.348942+00:00",
+  "uuid": "2b526d18-9000-4246-b918-f77f0ca4dbac",
+  "version": "1",
+  "agent": "human",
+  "model": "Joose Rajamäki",
+  "repo": "why-notes",
+  "repo_url": "git@github.com:JooseRajamaeki/why-notes.git",
+  "dir": "skills/why-notes/src",
+  "basename": "note.py",
+  "branch": "tests/add-unittest-suite",
+  "commit": "8fedcc2",
+  "related": [],
+  "note": "We should also change the term \"tampered\" to \"corrupted\". Tampered communicates some sort of intention. It's much more likely that the notes are corrupted by accident in a migration for instance.",
+  "checksum_fields": [
+    "agent",
+    "basename",
+    "checksum_fields",
+    "commit",
+    "dir",
+    "model",
+    "note",
+    "timestamp",
+    "uuid",
+    "version"
+  ],
+  "checksum": "c8c4db092f3b4df8a8c20d0f808e9ba5cf45906ce018abe1c119d47077473fe7"
+}

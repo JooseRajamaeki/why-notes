@@ -34,7 +34,7 @@ Run `--help` for the full contract. See `skills/why-notes/SKILL.md` for the agen
 
 ### `src/consult.py` — the lookup
 
-Before reading or editing a file, surface the prior rationale anchored to it. Notes print newest-first; when entries conflict, the most recent timestamp wins. Each loaded note's checksum is verified; tampered notes are flagged on stderr.
+Before reading or editing a file, surface the prior rationale anchored to it. Notes print newest-first; when entries conflict, the most recent timestamp wins. Each loaded note's checksum is verified; corrupted notes are flagged on stderr.
 
 **Example invocation** (placeholder values — substitute the repo and file you're about to work on):
 

@@ -51,7 +51,7 @@ def main():
             "list across the entire local notes corpus; cycles are detected "
             "and unresolved UUIDs (e.g. references into another corpus) are "
             "listed separately. Each loaded note's checksum is verified; "
-            "tampered notes are flagged on stderr."
+            "corrupted notes are flagged on stderr."
         ),
     )
     parser.add_argument(
@@ -130,16 +130,16 @@ def main():
         uniq = sorted(set(unresolved))
         print(f"Unresolved related UUIDs (not found in local corpus): {', '.join(uniq)}")
 
-    tampered = [n for n in (*primaries, *related_notes) if n.verify() == "tampered"]
+    corrupted = [n for n in (*primaries, *related_notes) if n.verify() == "corrupted"]
     legacy = sum(1 for n in (*primaries, *related_notes) if n.verify() == "no_checksum")
-    if tampered:
+    if corrupted:
         print(file=sys.stderr)
         print(
-            f"consult: WARNING — {len(tampered)} note(s) failed checksum verification "
-            "(content may have been edited after recording):",
+            f"consult: WARNING — {len(corrupted)} note(s) failed checksum verification "
+            "(content may have been altered since recording — accidentally or otherwise):",
             file=sys.stderr,
         )
-        for n in tampered:
+        for n in corrupted:
             print(f"  {n.uuid}  {n.location()}", file=sys.stderr)
     if legacy:
         print(

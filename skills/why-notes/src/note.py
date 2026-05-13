@@ -16,16 +16,21 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
 
-SCHEMA_VERSION = "1"
+SCHEMA_VERSION = "2.0.0"
 
-CHECKSUM_FIELDS = ("agent", "basename", "commit", "dir", "model", "note", "timestamp", "uuid")
-# Immutable fields added after the original schema. Included in the checksum
-# only when present on a given note, so legacy notes (written before the field
-# existed) still verify against their stored checksum.
-CHECKSUM_FIELDS_OPTIONAL = ("version",)
+# Canonical fields hashed into the checksum for newly-created notes. Each note
+# stores its own `checksum_fields` list, so this constant only seeds new notes;
+# verification reads the list off the note itself. `"checksum_fields"` is in
+# the list, making the checksum self-referential — altering the field list
+# invalidates the hash.
+CHECKSUM_FIELDS = (
+    "agent", "basename", "checksum_fields", "commit", "dir",
+    "model", "note", "timestamp", "uuid", "version",
+)
 SERIALIZED_FIELDS = (
     "timestamp", "uuid", "version", "agent", "model", "repo", "repo_url",
-    "dir", "basename", "branch", "commit", "related", "note", "checksum",
+    "dir", "basename", "branch", "commit", "related", "note",
+    "checksum_fields", "checksum",
 )
 
 
@@ -64,6 +69,7 @@ class Note:
     version: str = ""
     repo_url: str = ""
     related: list = field(default_factory=list)
+    checksum_fields: list = field(default_factory=list)
     checksum: str = ""
 
     @classmethod
@@ -85,6 +91,7 @@ class Note:
             commit=commit,
             related=list(related or []),
             note=note,
+            checksum_fields=list(CHECKSUM_FIELDS),
         )
         n.checksum = n.compute_checksum()
         return n
@@ -105,6 +112,7 @@ class Note:
             commit=data.get("commit", ""),
             related=list(data.get("related") or []),
             note=data.get("note", ""),
+            checksum_fields=list(data.get("checksum_fields") or []),
             checksum=data.get("checksum", "") or "",
         )
 
@@ -128,18 +136,14 @@ class Note:
         d["commit"] = self.commit
         d["related"] = list(self.related)
         d["note"] = self.note
+        if self.checksum_fields:
+            d["checksum_fields"] = list(self.checksum_fields)
         if self.checksum:
             d["checksum"] = self.checksum
         return d
 
     def compute_checksum(self):
-        payload_dict = {k: getattr(self, k) for k in CHECKSUM_FIELDS}
-        # Optional fields contribute to the checksum only when present, so
-        # adding a new immutable field doesn't invalidate pre-existing notes.
-        for k in CHECKSUM_FIELDS_OPTIONAL:
-            v = getattr(self, k, "")
-            if v:
-                payload_dict[k] = v
+        payload_dict = {k: getattr(self, k) for k in self.checksum_fields}
         payload = json.dumps(
             payload_dict,
             sort_keys=True,
@@ -149,10 +153,15 @@ class Note:
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     def verify(self):
-        """Return 'valid', 'tampered', or 'no_checksum'."""
-        if not self.checksum:
+        """Return 'valid', 'corrupted', or 'no_checksum'.
+
+        An empty `checksum_fields` means the note declares no integrity
+        coverage (legacy notes written before the self-describing scheme),
+        so verification is skipped and reported as 'no_checksum'.
+        """
+        if not self.checksum_fields or not self.checksum:
             return "no_checksum"
-        return "valid" if self.checksum == self.compute_checksum() else "tampered"
+        return "valid" if self.checksum == self.compute_checksum() else "corrupted"
 
     def location(self):
         d = self.dir or ""

@@ -226,7 +226,7 @@ class ConsultCliTests(unittest.TestCase):
         self.assertEqual(r.returncode, 0)
         self.assertIn("no notes", r.stderr)
 
-    def test_consult_flags_tampered_note(self):
+    def test_consult_flags_corrupted_note(self):
         r = run_record(
             self.repo, self.notes,
             "--agent", "claude", "--model", "opus 4.7",
