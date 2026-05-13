@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-05-13T17:06:35.587799+00:00",
+  "uuid": "4e9a71a1-ef59-4b4f-8005-4e3f47b5c00d",
+  "version": "3.0.0",
+  "agent": "claude",
+  "model": "opus 4.7",
+  "repo": "why-notes",
+  "repo_url": "git@github.com:JooseRajamaeki/why-notes.git",
+  "dir": ".githooks",
+  "basename": "post-rewrite",
+  "branch": "feature/rebase-aware-commits",
+  "commit": [
+    "864d5c1"
+  ],
+  "related": [],
+  "note": "The bundled post-rewrite hook resolves the rewrite script via\n`$REPO_ROOT/skills/why-notes/src/rewrite.py` — that is, it assumes the\nconsuming repo has the skill installed at exactly that path. This\nholds for the why-notes repo itself and for any repo where users\nvendor the skill in alongside their notes corpus (the documented\ninstallation pattern). It does NOT work if the skill lives elsewhere\non the system; users in that situation must either symlink the skill\ninto the repo, configure `core.hooksPath` to a different hook script,\nor invoke `rewrite.py --stdin` from a custom hook.\n\nThe test suite cannot exercise the bundled hook verbatim because the\ntemp git repos created in `PostRewriteHookTests.setUp` don't carry the\nskill files. Tests use a separate `tests`-only hook that exec's the\nreal `rewrite.py` from the source tree directly. A separate test\n(`BundledHookTests`) covers the bundled script's executability and\nshape so the install-time assumption stays documented.",
+  "checksum_fields": [
+    "agent",
+    "basename",
+    "checksum_fields",
+    "commit",
+    "dir",
+    "model",
+    "note",
+    "timestamp",
+    "uuid",
+    "version"
+  ],
+  "checksum": "c771937ebd57890c661fc82fed64aac546f45efe48b4c3231233d7c17ef1ea48"
+}
