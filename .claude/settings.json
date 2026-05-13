@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -n '{\"systemMessage\":\"Consider invoking /why-notes if any architectural rationale surfaced this session.\"}'"
+          }
+        ]
+      }
+    ]
+  }
+}
