@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Keep why-notes' commit anchors current across rebases and amends.
+# Git invokes this with stdin lines of `<old-sha> <new-sha>` for every
+# rewritten commit. Enable for this repo with:
+#   git config core.hooksPath .githooks
+set -euo pipefail
+REPO_ROOT=$(git rev-parse --show-toplevel)
+exec python3 "$REPO_ROOT/skills/why-notes/src/rewrite.py" --stdin

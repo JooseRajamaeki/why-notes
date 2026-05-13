@@ -63,14 +63,14 @@ One JSON per note (rather than an aggregate log) makes the corpus trivially inge
 |-------------|------------|------------------------------------------------------------------------------------------|
 | `timestamp` | string     | ISO 8601 UTC timestamp of when the note was recorded.                                    |
 | `uuid`      | string     | UUIDv4. Suffix of the filename; referenced by other notes' `related`.                    |
-| `version`   | string     | Schema version the note was written under (current: `"1"`). Omitted on pre-versioning notes. |
+| `version`   | string     | Schema version the note was written under (current: `"3.0.0"`). Omitted on pre-versioning notes. |
 | `agent`     | string     | Source: `human` for users, `claude` / `openai` / etc. for AI sources.                    |
 | `model`     | string     | AI model id (e.g. `opus 4.7`) for AI sources; the human's name for human sources.        |
 | `repo`      | string     | Git repository the note refers to (may differ from the cwd).                             |
 | `dir`       | string     | Parent directory of the noted file, relative to the repo root (`""` if at root).         |
 | `basename`  | string     | File name within the repo.                                                               |
 | `branch`    | string     | Git branch of the cwd repo at recording time.                                            |
-| `commit`    | string     | Short git commit hash of the cwd repo at recording time. Required.                       |
+| `commit`    | `string[]` | Short commit hashes anchoring the note, oldest first; the last entry is current. New entries are appended when a rebase or amend rewrites a referenced commit (see `.githooks/post-rewrite`). Legacy v2 notes store a single string. Required. |
 | `repo_url` | string     | Git remote URL of the repo at recording time (omitted if unavailable).                   |
 | `related`   | `string[]` | UUIDs of related notes for cross-referencing principles that span files.                 |
 | `note`      | string     | Free-form prose: the rationale, constraint, or tradeoff being recorded.                  |
@@ -83,7 +83,7 @@ One JSON per note (rather than an aggregate log) makes the corpus trivially inge
 - **Verbatim human input.** When `--agent human`, the user's words are recorded unchanged. No paraphrasing, no summarising. Different humans (or the same human across sessions) are disambiguated by `--model <name>`.
 - **Commit anchor required.** The recorder fails if the cwd is not in a git repo with at least one commit. Every note ties to a codebase snapshot.
 - **Recency wins.** When notes conflict, the newer one supersedes. `consult.py` surfaces newest-first to make this obvious.
-- **Append-only corpus.** Existing JSON files under `why-notes/` are immutable history. Don't edit or delete them by hand; the only legitimate mutations are adding new notes (each is a new file) and the recorder's automatic backlink patches to `related`.
+- **Append-only corpus.** Existing JSON files under `why-notes/` are immutable history. Don't edit or delete them by hand; the only legitimate mutations are adding new notes (each is a new file), the recorder's automatic backlink patches to `related`, and the rewrite tool's appends to `commit` when a rebase or amend changes the referenced SHA.
 - **Skip the obvious.** Don't record what the code already shows or the commit message already explains. Notes are for the *why* that would otherwise be lost.
 - **Standard library only.** Scripts in this repo must not import anything outside the Python standard library. No `pip install`, no `requirements.txt`, no virtualenv — the tools must run on a bare-bones machine with only `python3` and `git` available. Reach for the stdlib (or shell out to `git`) before introducing any third-party dependency.
 
@@ -92,13 +92,16 @@ One JSON per note (rather than an aggregate log) makes the corpus trivially inge
 ```
 .
 ├── README.md                       (this file)
+├── .githooks/
+│   └── post-rewrite                git hook: rebase/amend → rewrite notes
 ├── skills/
-│   └── why-notes/                  the skill (record + consult)
+│   └── why-notes/                  the skill (record + consult + rewrite)
 │       ├── SKILL.md                trigger guidance for agents
 │       └── src/
 │           ├── note.py             Note + NotesStore classes (shared)
 │           ├── record.py           recorder CLI
-│           └── consult.py          lookup CLI
+│           ├── consult.py          lookup CLI
+│           └── rewrite.py          rebase/amend patcher CLI
 └── why-notes/                      the recorded corpus
     └── <repo>/<dir>/<basename>-<uuid>.json
 ```

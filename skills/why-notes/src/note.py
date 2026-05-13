@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
 
-SCHEMA_VERSION = "2.0.0"
+SCHEMA_VERSION = "3.0.0"
 
 # Canonical fields hashed into the checksum for newly-created notes. Each note
 # stores its own `checksum_fields` list, so this constant only seeds new notes;
@@ -64,7 +64,11 @@ class Note:
     dir: str
     basename: str
     branch: str
-    commit: str
+    # `list[str]` from v3.0.0 onward: index 0 is the original anchor, the
+    # last element is current, middle entries are intermediate rewrites
+    # (rebase / amend). Legacy v2 notes stored a single string; from_dict
+    # preserves whichever form is on disk so existing checksums verify.
+    commit: list[str] | str
     note: str
     version: str = ""
     repo_url: str = ""
@@ -88,7 +92,7 @@ class Note:
             dir=dir_in_repo,
             basename=file_rel.name,
             branch=branch,
-            commit=commit,
+            commit=[commit],
             related=list(related or []),
             note=note,
             checksum_fields=list(CHECKSUM_FIELDS),
@@ -166,6 +170,31 @@ class Note:
     def location(self):
         d = self.dir or ""
         return f"{self.repo}/" + (f"{d}/" if d else "") + self.basename
+
+    def current_commit(self) -> str:
+        """The currently-active short SHA, regardless of on-disk form."""
+        if isinstance(self.commit, list):
+            return self.commit[-1] if self.commit else ""
+        return self.commit
+
+    def append_commit(self, new_sha: str) -> bool:
+        """Record a rewrite of the current commit (rebase / amend).
+
+        Promotes legacy string-form `commit` to a list, appends the new
+        SHA, bumps `version` to the current schema, and recomputes the
+        checksum. No-ops if `new_sha` already equals the current commit
+        (idempotent against re-runs of the rewrite hook). Returns True
+        if the note changed.
+        """
+        if not new_sha or new_sha == self.current_commit():
+            return False
+        if isinstance(self.commit, str):
+            self.commit = [self.commit, new_sha] if self.commit else [new_sha]
+        else:
+            self.commit = [*self.commit, new_sha]
+        self.version = SCHEMA_VERSION
+        self.checksum = self.compute_checksum()
+        return True
 
 
 class NotesStore:

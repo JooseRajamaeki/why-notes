@@ -30,7 +30,7 @@ def make_note(**overrides):
         repo_url="https://example.com/repo",
         file_rel=PurePosixPath("src/note.py"),
         branch="main",
-        commit="abc1234",
+        commit="abc1234",  # caller-facing arg; Note.create wraps it in a list
         related=[],
         note="some rationale",
     )
@@ -133,6 +133,93 @@ class NoteChecksumTests(unittest.TestCase):
         self.assertIn("checksum_fields", CHECKSUM_FIELDS)
         # Used by new notes, so SCHEMA_VERSION must be a non-empty string.
         self.assertTrue(SCHEMA_VERSION)
+
+
+class CommitChainTests(unittest.TestCase):
+    def test_new_note_stores_commit_as_single_element_list(self):
+        n = make_note(commit="abc1234")
+        self.assertEqual(n.commit, ["abc1234"])
+        self.assertEqual(n.current_commit(), "abc1234")
+        self.assertEqual(n.verify(), "valid")
+
+    def test_append_commit_extends_chain_and_recomputes_checksum(self):
+        n = make_note(commit="abc1234")
+        original = n.checksum
+        self.assertTrue(n.append_commit("def5678"))
+        self.assertEqual(n.commit, ["abc1234", "def5678"])
+        self.assertEqual(n.current_commit(), "def5678")
+        self.assertNotEqual(n.checksum, original)
+        self.assertEqual(n.verify(), "valid")
+
+    def test_append_commit_is_idempotent_on_current(self):
+        n = make_note(commit="abc1234")
+        self.assertFalse(n.append_commit("abc1234"))
+        self.assertEqual(n.commit, ["abc1234"])
+
+    def test_append_commit_ignores_empty_new_sha(self):
+        n = make_note(commit="abc1234")
+        self.assertFalse(n.append_commit(""))
+        self.assertEqual(n.commit, ["abc1234"])
+
+    def test_legacy_string_commit_verifies_against_string_checksum(self):
+        # Build a v2-shaped on-disk record with a string commit field, then
+        # verify the loaded note still hashes against the string form.
+        legacy = {
+            "timestamp": "2026-01-01T00:00:00+00:00",
+            "uuid": "11111111-1111-1111-1111-111111111111",
+            "version": "2.0.0",
+            "agent": "claude",
+            "model": "opus 4.6",
+            "repo": "why-notes",
+            "dir": "src",
+            "basename": "note.py",
+            "branch": "main",
+            "commit": "deadbee",
+            "related": [],
+            "note": "legacy rationale",
+            "checksum_fields": list(CHECKSUM_FIELDS),
+        }
+        # Compute what the on-disk checksum would have been for this v2 note.
+        n = Note.from_dict(legacy)
+        legacy["checksum"] = n.compute_checksum()
+        n = Note.from_dict(legacy)
+        self.assertEqual(n.commit, "deadbee")  # string form preserved
+        self.assertEqual(n.verify(), "valid")
+
+    def test_append_commit_migrates_legacy_string_to_list(self):
+        # Same v2 fixture; after a rewrite, commit becomes a list and the
+        # note's version bumps to current SCHEMA_VERSION.
+        legacy = {
+            "timestamp": "2026-01-01T00:00:00+00:00",
+            "uuid": "22222222-2222-2222-2222-222222222222",
+            "version": "2.0.0",
+            "agent": "claude",
+            "model": "opus 4.6",
+            "repo": "why-notes",
+            "dir": "src",
+            "basename": "note.py",
+            "branch": "main",
+            "commit": "deadbee",
+            "related": [],
+            "note": "legacy rationale",
+            "checksum_fields": list(CHECKSUM_FIELDS),
+        }
+        n = Note.from_dict(legacy)
+        legacy["checksum"] = n.compute_checksum()
+        n = Note.from_dict(legacy)
+
+        self.assertTrue(n.append_commit("cafebab"))
+        self.assertEqual(n.commit, ["deadbee", "cafebab"])
+        self.assertEqual(n.version, SCHEMA_VERSION)
+        self.assertEqual(n.verify(), "valid")
+
+    def test_multi_step_rewrite_chain(self):
+        n = make_note(commit="aaaaaaa")
+        n.append_commit("bbbbbbb")
+        n.append_commit("ccccccc")
+        self.assertEqual(n.commit, ["aaaaaaa", "bbbbbbb", "ccccccc"])
+        self.assertEqual(n.current_commit(), "ccccccc")
+        self.assertEqual(n.verify(), "valid")
 
 
 class NoteSerializationTests(unittest.TestCase):
