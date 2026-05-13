@@ -13,7 +13,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "src"
+SRC = ROOT / "skills" / "why-notes" / "src"
 RECORD = SRC / "record.py"
 CONSULT = SRC / "consult.py"
 

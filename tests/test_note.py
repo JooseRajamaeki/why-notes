@@ -1,4 +1,4 @@
-"""Unit tests for the why-notes data model in src/note.py."""
+"""Unit tests for the why-notes data model in skills/why-notes/src/note.py."""
 
 import json
 import os
@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path, PurePosixPath
 from unittest import mock
 
-SRC = Path(__file__).resolve().parent.parent / "src"
+SRC = Path(__file__).resolve().parent.parent / "skills" / "why-notes" / "src"
 sys.path.insert(0, str(SRC))
 
 from note import (  # noqa: E402
