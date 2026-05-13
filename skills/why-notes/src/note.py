@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
 
-SCHEMA_VERSION = "1"
+SCHEMA_VERSION = "2.0.0"
 
 # Canonical fields hashed into the checksum for newly-created notes. Each note
 # stores its own `checksum_fields` list, so this constant only seeds new notes;
